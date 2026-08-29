@@ -1,0 +1,28 @@
+{
+  "name": "agentic-smith",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Your agentic workspace for Craftland",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "predev": "npm run build:packages",
+    "dev": "npm run dev --workspace @clpc/desktop",
+    "build": "npm run build:packages && npm run build --workspace @clpc/desktop",
+    "build:packages": "npm run build --workspace @clpc/types && npm run build --workspace @clpc/tools && npm run build --workspace @clpc/mcp-client && npm run build --workspace @clpc/model-providers && npm run build --workspace @clpc/platform-craftland && npm run build --workspace @clpc/core",
+    "pretypecheck": "npm run build:packages",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.8.1",
+    "@typescript-eslint/parser": "^8.8.1",
+    "eslint": "^8.57.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

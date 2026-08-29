@@ -1,0 +1,22 @@
+{
+  "name": "@clpc/tools",
+  "version": "0.1.0",
+  "description": "Generic tool system for CLPC Smith: registry, invoker, lifecycle events",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clpc/types": "0.1.0",
+    "ajv": "^8.16.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

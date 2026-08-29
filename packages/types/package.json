@@ -1,0 +1,17 @@
+{
+  "name": "@clpc/types",
+  "version": "0.1.0",
+  "description": "Shared TypeScript types for CLPC Smith",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "echo \"no tests yet\""
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5"
+  }
+}
