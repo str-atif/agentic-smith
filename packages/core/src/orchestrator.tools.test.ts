@@ -83,7 +83,7 @@ describe("AgentOrchestrator tool loop", () => {
     expect(assistant[0].toolCalls).toHaveLength(1);
     expect(assistant[1].content).toBe("Answer: 42");
     expect(toolEvents).toContain("get_answer");
-    expect(session.status).toBe("idle");
+    expect(session.status).toBe("completed");
   });
 
   it("requests approval for tools that require it and passes the result", async () => {

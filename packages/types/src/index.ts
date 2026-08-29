@@ -53,7 +53,18 @@ export interface ModelProvider {
   stream(request: ChatRequest): AsyncIterable<StreamingEvent>;
 }
 
-export type SessionStatus = "idle" | "thinking" | "streaming" | "error";
+export type TaskStatus =
+  | "idle"
+  | "thinking"
+  | "streaming"
+  | "executing_tool"
+  | "waiting_for_tool"
+  | "continuing"
+  | "completed"
+  | "failed"
+  | "error";
+
+export type SessionStatus = TaskStatus;
 
 export interface AgentSession {
   id: string;
@@ -62,7 +73,28 @@ export interface AgentSession {
   modelName: string;
   status: SessionStatus;
   createdAt: string;
+  updatedAt?: string;
+  title?: string;
 }
+
+export interface SessionSummary {
+  id: string;
+  title: string;
+  modelId: string;
+  modelName: string;
+  status: SessionStatus;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+}
+
+export type ToolErrorCode =
+  | "tool_validation"
+  | "tool_execution"
+  | "mcp_connection"
+  | "timeout"
+  | "permission"
+  | "unknown";
 
 export interface ModelProviderConfig {
   providerId: string;
@@ -70,6 +102,72 @@ export interface ModelProviderConfig {
   modelName: string;
   baseUrl?: string;
   label?: string;
+  orgId?: string;
+  projectId?: string;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+  streaming?: boolean;
+}
+
+export interface ProviderPreset {
+  id: string;
+  displayName: string;
+  providerId: string;
+  modelName: string;
+  baseUrl?: string;
+  apiKey?: string;
+  orgId?: string;
+  projectId?: string;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+  streaming?: boolean;
+}
+
+export type ProviderPresetView = Omit<ProviderPreset, "apiKey"> & {
+  hasApiKey: boolean;
+};
+
+export type ProviderPresetDraft = Omit<ProviderPreset, "id"> & {
+  id?: string;
+};
+
+export interface ModelProviderPresetInfo {
+  id: string;
+  displayName: string;
+  providerId: string;
+  baseUrl?: string;
+  apiKeyOptional?: boolean;
+}
+
+export interface ModelConnectionTestResult {
+  ok: boolean;
+  endpoint?: string;
+  model?: string;
+  latencyMs?: number;
+  streaming?: boolean;
+  message: string;
+}
+
+export type CraftlandConnectionState =
+  | "unavailable"
+  | "detecting"
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | "reconnecting"
+  | "error";
+
+export interface CraftlandInfo {
+  state: CraftlandConnectionState;
+  pid?: number;
+  port?: number;
+  endpoint?: string;
+  toolCount?: number;
+  project?: string;
+  scene?: string;
+  serverName?: string;
+  error?: string;
+  lastUpdated?: string;
 }
 
 export type ApprovalStatus = "pending" | "approved" | "denied";

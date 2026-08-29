@@ -205,4 +205,28 @@ describe("HttpClientTransport", () => {
     const secondRequest = fetchMock.mock.calls[1][1] as { headers: Record<string, string> };
     expect(secondRequest.headers["Mcp-Session-Id"]).toBe("sess-123");
   });
+
+  it("does not double-append /mcp when the configured url already ends with /mcp", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"ok":true}', {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const config: McpServerConfig = {
+      id: "http3",
+      name: "HTTP",
+      transport: "http",
+      url: "https://example.com/7thzqnj22b7-mte22lwo-lzcuacbyvqd/mcp",
+    };
+    const transport = new HttpClientTransport(config);
+    await transport.send("{}");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.com/7thzqnj22b7-mte22lwo-lzcuacbyvqd/mcp",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
 });

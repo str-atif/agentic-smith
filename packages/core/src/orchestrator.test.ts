@@ -44,8 +44,22 @@ describe("AgentOrchestrator", () => {
     expect(session.messages[0].content).toBe("hello");
     expect(session.messages[1].role).toBe("assistant");
     expect(session.messages[1].content).toBe("Hello");
-    expect(session.status).toBe("idle");
+    expect(session.status).toBe("completed");
     expect(tokens.join("")).toBe("Hello");
+  });
+
+  it("emits staged session status events in order", async () => {
+    const bus = new SimpleEventBus();
+    const orch = new AgentOrchestrator({ provider: new FakeProvider(), eventBus: bus });
+
+    const statuses: string[] = [];
+    bus.on("session_status", (data: { status: string }) => statuses.push(data.status));
+
+    await orch.sendMessage("hello");
+
+    expect(statuses[0]).toBe("thinking");
+    expect(statuses).toContain("streaming");
+    expect(statuses[statuses.length - 1]).toBe("completed");
   });
 
   it("emits error and sets status when the provider throws", async () => {
@@ -58,12 +72,20 @@ describe("AgentOrchestrator", () => {
 
     const orch = new AgentOrchestrator({ provider: failing, eventBus: bus });
     let sawError = false;
+    let sawAgentError = false;
     bus.on("error", (data: { message: string }) => {
       if (data.message === "boom") sawError = true;
     });
+    bus.on("agent_error", (data: { message: string; code: string }) => {
+      if (data.message === "boom") {
+        sawAgentError = true;
+        expect(data.code).toBeDefined();
+      }
+    });
 
     await expect(orch.sendMessage("x")).rejects.toThrow("boom");
-    expect(orch.getSession().status).toBe("error");
+    expect(orch.getSession().status).toBe("failed");
     expect(sawError).toBe(true);
+    expect(sawAgentError).toBe(true);
   });
 });

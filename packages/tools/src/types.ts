@@ -1,4 +1,4 @@
-import type { ToolCallRequest } from "@clpc/types";
+import type { ToolCallRequest, ToolErrorCode } from "@clpc/types";
 
 export interface ToolContext {
   sessionId?: string;
@@ -9,6 +9,7 @@ export interface ToolResult {
   output?: unknown;
   error?: string;
   durationMs: number;
+  code?: ToolErrorCode;
 }
 
 export interface Tool {
@@ -23,6 +24,12 @@ export type ToolLifecycleEvent =
   | { type: "tool_started"; callId: string; toolName: string; timestamp: string }
   | { type: "tool_progress"; callId: string; message: string; timestamp: string }
   | { type: "tool_completed"; callId: string; result: ToolResult; timestamp: string }
-  | { type: "tool_failed"; callId: string; error: string; timestamp: string };
+  | {
+      type: "tool_failed";
+      callId: string;
+      error: string;
+      code?: ToolErrorCode;
+      timestamp: string;
+    };
 
-export { ToolCallRequest };
+export { ToolCallRequest, ToolErrorCode };

@@ -22,6 +22,32 @@ function streamBody(chunks: string[]): ReadableStream<Uint8Array> {
   });
 }
 
+function delayedSse(
+  parts: Array<{ text: string; at: number }>,
+  opts?: RequestInit,
+  closeAfterLast = 50
+): Response {
+  const encoder = new TextEncoder();
+  let emitter: ReadableStreamDefaultController<Uint8Array> | undefined;
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      emitter = controller;
+      opts?.signal?.addEventListener("abort", () => {
+        controller.error(new DOMException("Aborted", "AbortError"));
+      });
+    },
+  });
+  for (const part of parts) {
+    setTimeout(() => emitter?.enqueue(encoder.encode(part.text)), part.at);
+  }
+  const total = parts.length ? Math.max(...parts.map((p) => p.at)) + closeAfterLast : 10_000;
+  setTimeout(() => emitter?.close(), total);
+  return new Response(body, {
+    status: 200,
+    headers: { "Content-Type": "text/event-stream" },
+  });
+}
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -82,6 +108,53 @@ describe("OpenAIProvider", () => {
     await expect(provider.complete(buildRequest({ stream: false }))).rejects.toThrow(
       /401/
     );
+  });
+
+  it("does not abort a stream merely because it outlived the wall clock while data keeps arriving", async () => {
+    const sse1 =
+      "data: " + JSON.stringify({ id: "x", choices: [{ delta: { content: "He" }, finish_reason: null }] }) + "\n\n";
+    const sse2 =
+      "data: " + JSON.stringify({ id: "x", choices: [{ delta: { content: "llo" }, finish_reason: null }] }) + "\n\n";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) =>
+        delayedSse(
+          [
+            { text: sse1, at: 20 },
+            { text: sse2, at: 300 },
+          ],
+          opts
+        )
+      )
+    );
+
+    const provider = new OpenAIProvider({ apiKey: "sk-test", timeoutMs: 400 });
+    const events: Array<{ type: string; content?: string }> = [];
+    for await (const event of provider.stream(buildRequest())) {
+      events.push(event as { type: string; content?: string });
+    }
+    expect(events.filter((e) => e.type === "token").map((e) => e.content).join("")).toBe(
+      "Hello"
+    );
+    expect(events[events.length - 1].type).toBe("done");
+  });
+
+  it("times out an idle stream when no data arrives within timeoutMs", async () => {
+    const sse =
+      "data: " + JSON.stringify({ id: "x", choices: [{ delta: { content: "one" }, finish_reason: null }] }) + "\n\n";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) =>
+        delayedSse([{ text: sse, at: 20 }], opts, 10_000)
+      )
+    );
+
+    const provider = new OpenAIProvider({ apiKey: "sk-test", timeoutMs: 200 });
+    await expect(async () => {
+      for await (const _event of provider.stream(buildRequest())) {
+        // consume nothing, just wait
+      }
+    }).rejects.toThrow(/timed out/);
   });
 });
 

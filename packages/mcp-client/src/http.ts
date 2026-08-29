@@ -56,7 +56,8 @@ export class HttpClientTransport implements McpRequestTransport {
       headers["Mcp-Session-Id"] = this.sessionId;
     }
 
-    const response = await fetch(`${baseUrl}/mcp`, {
+    const endpoint = baseUrl.endsWith("/mcp") ? baseUrl : `${baseUrl}/mcp`;
+    const response = await fetch(endpoint, {
       method: "POST",
       headers,
       body: raw,

@@ -2,6 +2,7 @@ import type { ToolLifecycleEvent } from "@clpc/tools";
 
 export type EventType =
   | "session_created"
+  | "session_updated"
   | "message_received"
   | "session_status"
   | "token"
@@ -11,11 +12,44 @@ export type EventType =
   | "tool_completed"
   | "tool_failed"
   | "approval_requested"
+  | "agent_error"
   | "error";
 
 export interface SessionStatusEvent {
   sessionId: string;
   status: string;
+  stage?: string;
+}
+
+export interface SessionUpdatedEvent {
+  sessionId: string;
+  summary: {
+    id: string;
+    title: string;
+    modelId: string;
+    modelName: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    messageCount: number;
+  };
+}
+
+export type AgentErrorCode =
+  | "tool_validation"
+  | "tool_execution"
+  | "mcp_connection"
+  | "model"
+  | "timeout"
+  | "permission"
+  | "unknown";
+
+export interface AgentErrorEvent {
+  sessionId: string;
+  code: AgentErrorCode;
+  kind: string;
+  message: string;
+  detail?: unknown;
 }
 
 export interface TokenEvent {
